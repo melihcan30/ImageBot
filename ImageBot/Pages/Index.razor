@@ -1,9 +1,74 @@
 ﻿@page "/"
+@using OpenAI;
+@using OpenAI.Images;
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Image Generator</PageTitle>
+<h2 style="text-align:center">
+	<b>AI Image Generator</b>
+</h2>
+<br />
+<h5>
+	<b>Given a prompt, the model will return a generated image or images</b>
+</h5>
+<div class="row">
+	<div class="col-sm-10">
+		<input type="text" class="form-control" placeholder="Give me a clue..." @bind="prompt" />
+	</div>
+	<div class="col-sm-2">
+		<button class="btn btn-success" @onclick="StartImageGeneratorService"> Generate</button>
+	</div>
+</div>
+<br />
 
-<h1>Hello, world!</h1>
+@if (_isLoading)
+{
+	<div class="d-flex justify-content-center">
+		<div class="spinner-border" role="status">
 
-Welcome to your new app.
+		</div>
+	</div>
+}
+else
+{
+	<p>@((MarkupString)GeneratedImage)</p>
+}
+<p style="color:red">@ErrorMessage</p>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code{
+	string ErrorMessage = string.Empty;
+	string prompt = string.Empty;
+	string GeneratedImage = string.Empty;
+	bool _isLoading = false;
+	string ApiKey = string.Empty;
+
+	protected override void OnInitialized()
+	{
+		ApiKey = "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";
+	}
+
+	public async Task StartImageGeneratorService()
+	{
+		try
+		{
+			StateHasChanged();
+			ErrorMessage = string.Empty;
+			GeneratedImage = string.Empty;
+			_isLoading = true;
+			var _openAIClient = new OpenAIClient(new OpenAIAuthentication(ApiKey));
+			var imageResult = await _openAIClient.ImagesEndPoint.GenerateImageAsync(prompt, 3, ImageSize.Small);
+			foreach (var image in imageResult)
+			{
+				GeneratedImage += "<img src='" + image + "'/>&nbsp;&nbsp;";
+			}
+		}
+		catch (Exception ex)
+		{
+			ErrorMessage = ex.Message;
+		}
+		finally
+		{
+			_isLoading = false;
+			StateHasChanged();
+		}
+	}
+}
